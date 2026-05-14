@@ -1,170 +1,79 @@
-# Word Cloud Layout
+# d3-cloud-es
 
-This is a [Wordle](http://www.wordle.net/)-inspired word cloud layout written
-in JavaScript. It uses HTML5 canvas and sprite masks to achieve
-near-interactive speeds.
+> 日本語のREADMEはこちらです: [README.ja.md](README.ja.md)
 
-See [here](http://www.jasondavies.com/wordcloud/) for an interactive
-demonstration along with implementation details.
+An ES module fork of the popular [d3-cloud](https://github.com/jasondavies/d3-cloud) library by [Jason Davies](https://www.jasondavies.com/). This module generates word clouds in JavaScript, using HTML5 canvas and sprite masks for high-performance collision detection.
 
-![Example cloud of Twitter search results for “amazing”](http://www.jasondavies.com/wordcloud/amazing.png)
+The layout algorithm is based on a paper by [Jonathan Feinberg](http://static.mrfeinberg.com/bv_ch03.pdf).
+
+## Demo
+
+View the [live examples](https://code4fukui.github.io/d3-cloud-es/examples/).
+
+## Features
+
+- Asynchronous layout algorithm that does not block the UI.
+- High performance via sprite-based collision detection.
+- Highly customizable word attributes: font, size, rotation, and padding.
+- Supports both browser and Node.js environments.
+- Events for tracking word placement and layout completion.
+
+## Installation
+
+In a browser, you can load the module directly from a CDN like Skypack:
+
+```html
+<script type="module">
+  import { cloud } from "https://cdn.skypack.dev/d3-cloud-es";
+  // ... your code here
+</script>
+```
+
+For server-side use in Node.js, you will also need to install a canvas implementation, such as `canvas`.
+
+```bash
+npm install d3-cloud-es canvas
+```
 
 ## Usage
 
-See the [samples](https://code4fukui.github.io/d3-cloud-es/examples/) in `examples/`.
+### Browser
 
-## API Reference
+This example fetches a list of words and renders the resulting cloud as an SVG using D3.
 
-<a name="cloud" href="#cloud">#</a> d3.layout.<b>cloud</b>()
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdn.skypack.dev/d3@7"></script>
+  <script type="module">
+    import { cloud } from "https://cdn.skypack.dev/d3-cloud-es";
 
-Constructs a new cloud layout instance.
+    const words = ["Hello", "world", "normally", "you", "want", "more", "words", "than", "this"]
+      .map(d => ({text: d, size: 10 + Math.random() * 90}));
 
-<a name="on" href="#on">#</a> <b>on</b>(<i>type</i>, <i>listener</i>)
+    const layout = cloud()
+      .size([500, 500])
+      .words(words)
+      .padding(5)
+      .rotate(() => Math.floor(Math.random() * 2) * 90)
+      .font("Impact")
+      .fontSize(d => d.size)
+      .on("end", draw);
 
-Registers the specified *listener* to receive events of the specified *type*
-from the layout. Currently, only "word" and "end" events are supported.
+    layout.start();
 
-A "word" event is dispatched every time a word is successfully placed.
-Registered listeners are called with a single argument: the word object that
-has been placed.
-
-An "end" event is dispatched when the layout has finished attempting to place
-all words.  Registered listeners are called with two arguments: an array of the
-word objects that were successfully placed, and a *bounds* object of the form
-`[{x0, y0}, {x1, y1}]` representing the extent of the placed objects.
-
-<a name="start" href="#start">#</a> <b>start</b>()
-
-Starts the layout algorithm.  This initialises various attributes on the word
-objects, and attempts to place each word, starting with the largest word.
-Starting with the centre of the rectangular area, each word is tested for
-collisions with all previously-placed words.  If a collision is found, it tries
-to place the word in a new position along the spiral.
-
-**Note:** if a word cannot be placed in any of the positions attempted along
-the spiral, it is **not included** in the final word layout.  This may be
-addressed in a future release.
-
-<a name="stop" href="#stop">#</a> <b>stop</b>()
-
-Stops the layout algorithm.
-
-<a name="timeInterval" href="#timeInterval">#</a> <b>timeInterval</b>([<i>time</i>])
-
-Internally, the layout uses `setInterval` to avoid locking up the browser’s
-event loop.  If specified, **time** is the maximum amount of time that can be
-spent during the current timestep.  If not specified, returns the current
-maximum time interval, which defaults to `Infinity`.
-
-<a name="words" href="#words">#</a> <b>words</b>([<i>words</i>])
-
-If specified, sets the **words** array.  If not specified, returns the current
-words array, which defaults to `[]`.
-
-<a name="size" href="#size">#</a> <b>size</b>([<i>size</i>])
-
-If specified, sets the rectangular `[width, height]` of the layout.  If not
-specified, returns the current size, which defaults to `[1, 1]`.
-
-<a name="font" href="#font">#</a> <b>font</b>([<i>font</i>])
-
-If specified, sets the **font** accessor function, which indicates the font
-face for each word.  If not specified, returns the current font accessor
-function, which defaults to `"serif"`.
-A constant may be specified instead of a function.
-
-<a name="fontStyle" href="#fontStyle">#</a> <b>fontStyle</b>([<i>fontStyle</i>])
-
-If specified, sets the **fontStyle** accessor function, which indicates the
-font style for each word.  If not specified, returns the current fontStyle
-accessor function, which defaults to `"normal"`.
-A constant may be specified instead of a function.
-
-<a name="fontWeight" href="#fontWeight">#</a> <b>fontWeight</b>([<i>fontWeight</i>])
-
-If specified, sets the **fontWeight** accessor function, which indicates the
-font weight for each word.  If not specified, returns the current fontWeight
-accessor function, which defaults to `"normal"`.
-A constant may be specified instead of a function.
-
-<a name="fontSize" href="#fontSize">#</a> <b>fontSize</b>([<i>fontSize</i>])
-
-If specified, sets the **fontSize** accessor function, which indicates the
-numerical font size for each word.  If not specified, returns the current
-fontSize accessor function, which defaults to:
-
-```js
-function(d) { return Math.sqrt(d.value); }
-```
-
-A constant may be specified instead of a function.
-
-<a name="rotate" href="#rotate">#</a> <b>rotate</b>([<i>rotate</i>])
-
-If specified, sets the **rotate** accessor function, which indicates the
-rotation angle (in degrees) for each word.  If not specified, returns the
-current rotate accessor function, which defaults to:
-
-```js
-function() { return (~~(Math.random() * 6) - 3) * 30; }
-```
-
-A constant may be specified instead of a function.
-
-<a name="text" href="#text">#</a> <b>text</b>([<i>text</i>])
-
-If specified, sets the **text** accessor function, which indicates the text for
-each word.  If not specified, returns the current text accessor function, which
-defaults to:
-
-```js
-function(d) { return d.text; }
-```
-
-A constant may be specified instead of a function.
-
-<a name="spiral" href="#spiral">#</a> <b>spiral</b>([<i>spiral</i>])
-
-If specified, sets the current type of spiral used for positioning words.  This
-can either be one of the two built-in spirals, "archimedean" and "rectangular",
-or an arbitrary spiral generator can be used, of the following form:
-
-```js
-// size is the [width, height] array specified in cloud.size
-function(size) {
-  // t indicates the current step along the spiral; it may monotonically
-  // increase or decrease indicating clockwise or counterclockwise motion.
-  return function(t) { return [x, y]; };
-}
-```
-
-If not specified, returns the current spiral generator, which defaults to the
-built-in "archimedean" spiral.
-
-<a name="padding" href="#padding">#</a> <b>padding</b>([<i>padding</i>])
-
-If specified, sets the **padding** accessor function, which indicates the
-numerical padding for each word.  If not specified, returns the current
-padding, which defaults to 1.
-
-<a name="random" href="#random">#</a> <b>random</b>([<i>random</i>])
-
-If specified, sets the internal random number generator, used for selecting the
-initial position of each word, and the clockwise/counterclockwise direction of
-the spiral for each word.  This should return a number in the range `[0, 1)`.
-
-If not specified, returns the current random number generator, which defaults
-to `Math.random`.
-
-<a name="canvas" href="#canvas">#</a> <b>canvas</b>([<i>canvas</i>])
-
-If specified, sets the **canvas** generator function, which is used internally
-to draw text.  If not specified, returns the current generator function, which
-defaults to:
-
-```js
-function() { return document.createElement("canvas"); }
-```
-
-When using Node.js, you will almost definitely override this default, e.g.
-using the [canvas module](https://www.npmjs.com/package/canvas).
+    function draw(words) {
+      d3.select("body").append("svg")
+          .attr("width", layout.size()[0])
+          .attr("height", layout.size()[1])
+        .append("g")
+          .attr("transform", `translate(${layout.size()[0] / 2},${layout.size()[1] / 2})`)
+        .selectAll("text")
+          .data(words)
+        .enter().append("text")
+          .style("font-size", d => `${d.size}px`)
+          .style("font-family", "Impact")
+          .attr("text-anchor", "middle")
+          .attr("transform", d => `translate(${[d.x, d.y]})rotate(${d.rotate})`)
+          .text(d => d.text);
